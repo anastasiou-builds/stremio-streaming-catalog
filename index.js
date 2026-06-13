@@ -270,6 +270,26 @@ builder.defineMetaHandler(async ({ type, id }) => {
       }
     }
 
+    if (tmdbType === "tv" && data.seasons?.length) {
+      const seasonNumbers = data.seasons
+        .filter(s => s.season_number > 0)
+        .map(s => s.season_number)
+      const seasonData = await Promise.all(
+        seasonNumbers.map(n => tmdb(`/tv/${tmdbId}/season/${n}`))
+      )
+      meta.videos = seasonData.flatMap(season =>
+        (season.episodes || []).map(ep => ({
+          id: `${meta.id}:${season.season_number}:${ep.episode_number}`,
+          title: ep.name,
+          season: season.season_number,
+          episode: ep.episode_number,
+          released: ep.air_date,
+          overview: ep.overview,
+          thumbnail: ep.still_path ? `${IMG_BASE}/w300${ep.still_path}` : undefined,
+        }))
+      )
+    }
+
     const watch = data["watch/providers"]?.results?.[REGION]
     if (watch?.flatrate) {
       meta.streamingServices = watch.flatrate.map(s => ({
