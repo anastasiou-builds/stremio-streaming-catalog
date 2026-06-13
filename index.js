@@ -143,7 +143,7 @@ function toMetaBody(item, type) {
     year: year ? Number(year) : undefined,
     poster,
     background,
-    posterShape: "regular",
+    posterShape: "poster",
     description: item.overview,
     releaseInfo: isSeries ? (item.first_air_date || "") : (item.release_date || ""),
     imdbRating: item.vote_average ? String(Math.round(item.vote_average * 10) / 10) : undefined,
@@ -239,8 +239,9 @@ builder.defineMetaHandler(async ({ type, id }) => {
     })
 
     const meta = toMetaBody(data, tmdbType)
-    if (data.external_ids?.imdb_id) {
-      meta.id = data.external_ids.imdb_id
+    const imdbId = data.external_ids?.imdb_id
+    if (imdbId && tmdbType !== "tv") {
+      meta.id = imdbId
     }
     meta.cast = data.credits?.cast?.slice(0, 15).map(c => ({
       name: c.name,
@@ -250,11 +251,17 @@ builder.defineMetaHandler(async ({ type, id }) => {
     meta.director = data.credits?.crew?.filter(c => c.job === "Director").map(c => c.name)
     meta.writers = data.credits?.crew?.filter(c => c.department === "Writing").map(c => c.name)
     meta.genres = data.genres?.map(g => g.name)
-    meta.releaseInfo = tmdbType === "tv" ? data.first_air_date : data.release_date
+    if (tmdbType === "tv") {
+      const start = (data.first_air_date || "").slice(0, 4)
+      const end = (data.last_air_date || "").slice(0, 4)
+      meta.releaseInfo = start ? (end && end !== start ? `${start}-${end}` : `${start}-`) : undefined
+    } else {
+      meta.releaseInfo = data.release_date
+    }
     meta.runtime = tmdbType === "tv"
       ? `${data.episode_run_time?.[0] || ""} min/ep`
       : `${data.runtime || ""} min`
-    meta.country = data.production_countries?.map(c => c.name) || data.origin_country
+    meta.country = data.production_countries?.map(c => c.name)[0] || data.origin_country?.[0]
     meta.language = data.original_language
     meta.status = data.status
     meta.totalEpisodes = data.number_of_episodes
@@ -277,16 +284,20 @@ builder.defineMetaHandler(async ({ type, id }) => {
       const seasonData = await Promise.all(
         seasonNumbers.map(n => tmdb(`/tv/${tmdbId}/season/${n}`))
       )
+      const seriesFirstAir = data.first_air_date || "1970-01-01"
       meta.videos = seasonData.flatMap(season =>
-        (season.episodes || []).map(ep => ({
-          id: `${meta.id}:${season.season_number}:${ep.episode_number}`,
-          title: ep.name,
-          season: season.season_number,
-          episode: ep.episode_number,
-          released: ep.air_date,
-          overview: ep.overview,
-          thumbnail: ep.still_path ? `${IMG_BASE}/w300${ep.still_path}` : undefined,
-        }))
+        (season.episodes || []).map(ep => {
+          const airDate = ep.air_date || seriesFirstAir
+          return {
+            id: `${imdbId || meta.id}:${season.season_number}:${ep.episode_number}`,
+            title: ep.name || `Episode ${ep.episode_number}`,
+            season: season.season_number,
+            episode: ep.episode_number,
+            released: new Date(airDate).toISOString(),
+            overview: ep.overview,
+            thumbnail: ep.still_path ? `${IMG_BASE}/w300${ep.still_path}` : undefined,
+          }
+        })
       )
     }
 
