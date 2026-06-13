@@ -355,7 +355,7 @@ builder.defineMetaHandler(async ({ type, id }) => {
     return { meta }
   } catch (err) {
     console.error("Meta handler error:", err.message)
-    return { meta: null }
+    return { meta: { id, type, name: "Unknown" } }
   }
 })
 
