@@ -3,17 +3,22 @@ const { builder } = require("../addon")
 
 const addonInterface = builder.getInterface()
 
-function sendJSON(res, statusCode, data) {
-  res.setHeader("Content-Type", "application/json; charset=utf-8")
+function setCORS(res) {
   res.setHeader("Access-Control-Allow-Origin", "*")
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS")
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+}
+
+function sendJSON(res, statusCode, data) {
+  res.setHeader("Content-Type", "application/json; charset=utf-8")
+  setCORS(res)
   res.statusCode = statusCode
   res.end(JSON.stringify(data))
 }
 
 function sendHTML(res, statusCode, html) {
   res.setHeader("Content-Type", "text/html; charset=utf-8")
-  res.setHeader("Access-Control-Allow-Origin", "*")
+  setCORS(res)
   res.statusCode = statusCode
   res.end(html)
 }
@@ -23,9 +28,7 @@ module.exports = async (req, res) => {
   const path = url.pathname
 
   if (req.method === "OPTIONS") {
-    res.setHeader("Access-Control-Allow-Origin", "*")
-    res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS")
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type")
+    setCORS(res)
     res.statusCode = 204
     res.end()
     return
