@@ -46,7 +46,7 @@ Add `http://localhost:7000/manifest.json` in Stremio → Addons → Install from
 
 ## Deploy to Vercel
 
-This addon is ready to deploy on Vercel's free tier.
+This addon is ready to deploy on Vercel's free tier. On the Vercel Hobby plan, the GitHub repo must be public for auto-deploy to work.
 
 1. Push this repo to GitHub.
 2. Go to [vercel.com](https://vercel.com) and **Import Project** → select your GitHub repo.
