@@ -179,7 +179,7 @@ const builder = addonBuilder({
   description: "Browse movies & series on Netflix, Prime, Disney+, Hulu, Max, Apple TV+, Paramount+, Peacock, Discovery+ — by genre, popularity, latest, or top rated",
   resources: [
     { name: "catalog", types: ["movie", "series"] },
-    { name: "meta",    types: ["movie", "series"], idPrefixes: ["movie:", "tv:"] },
+    { name: "meta",    types: ["movie", "series"], idPrefixes: ["movie:", "tv:", "tt"] },
     { name: "stream",  types: ["movie", "series"], idPrefixes: ["movie:", "tv:"] },
   ],
   types: ["movie", "series"],
@@ -244,8 +244,23 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
 
 builder.defineMetaHandler(async ({ type, id }) => {
   try {
-    const [, tmdbId] = id.split(":")
-    const tmdbType = type === "series" ? "tv" : "movie"
+    let tmdbId, tmdbType
+
+    if (id.startsWith("tt")) {
+      const findData = await tmdb(`/find/${id}`, { external_source: "imdb_id" })
+      if (findData.movie_results?.length) {
+        tmdbType = "movie"
+        tmdbId = findData.movie_results[0].id
+      } else if (findData.tv_results?.length) {
+        tmdbType = "tv"
+        tmdbId = findData.tv_results[0].id
+      } else {
+        return { meta: null }
+      }
+    } else {
+      [, tmdbId] = id.split(":")
+      tmdbType = type === "series" ? "tv" : "movie"
+    }
 
     const data = await tmdb(`/${tmdbType}/${tmdbId}`, {
       append_to_response: "credits,watch/providers,external_ids,videos",
