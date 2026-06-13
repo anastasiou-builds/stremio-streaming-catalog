@@ -1,0 +1,15 @@
+{
+  "name": "stremio-streaming-catalog",
+  "version": "2.0.0",
+  "description": "Stremio addon listing movies & TV series from major streaming platforms (Netflix, Prime, Disney+, Hulu, Max, Apple TV+, Paramount+, Peacock, Discovery+)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "node-fetch": "^2.7.0",
+    "stremio-addon-sdk": "^1.6.10"
+  }
+}
