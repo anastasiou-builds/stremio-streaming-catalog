@@ -177,9 +177,9 @@ const builder = addonBuilder({
   version: "2.0.0",
   name: "Streaming Catalog",
   description: "Browse movies & series on Netflix, Prime, Disney+, Hulu, Max, Apple TV+, Paramount+, Peacock, Discovery+ — by genre, popularity, latest, or top rated",
-  resources: ["catalog", "meta"],
+  resources: ["catalog", "meta", "stream"],
   types: ["movie", "series"],
-  idPrefixes: ["movie:", "tv:", "tt"],
+  idPrefixes: ["movie:", "tv:"],
   catalogs: buildCatalogs(),
   behaviorHints: {
     configurable: false,
@@ -356,6 +356,31 @@ builder.defineMetaHandler(async ({ type, id }) => {
   } catch (err) {
     console.error("Meta handler error:", err.message)
     return { meta: { id, type, name: "Unknown" } }
+  }
+})
+
+builder.defineStreamHandler(async ({ type, id }) => {
+  try {
+    if (id.startsWith("tt")) return { streams: [] }
+
+    const [, tmdbId] = id.split(":")
+    const tmdbType = type === "series" ? "tv" : "movie"
+
+    const data = await tmdb(`/${tmdbType}/${tmdbId}/watch/providers`)
+    const watch = data.results?.[REGION]
+
+    if (!watch?.flatrate) return { streams: [] }
+
+    const streams = watch.flatrate.map(s => ({
+      name: s.provider_name,
+      title: `${s.provider_name} (Streaming)`,
+      externalUrl: `https://www.themoviedb.org/${tmdbType}/${tmdbId}/watch`,
+    }))
+
+    return { streams }
+  } catch (err) {
+    console.error("Stream handler error:", err.message)
+    return { streams: [] }
   }
 })
 
