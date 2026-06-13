@@ -264,9 +264,6 @@ builder.defineMetaHandler(async ({ type, id }) => {
 
     const meta = toMetaBody(data, tmdbType)
     const imdbId = data.external_ids?.imdb_id
-    if (imdbId && tmdbType !== "tv") {
-      meta.id = imdbId
-    }
     meta.cast = data.credits?.cast?.slice(0, 15).map(c => ({
       name: c.name,
       role: c.character,
@@ -303,7 +300,15 @@ builder.defineMetaHandler(async ({ type, id }) => {
       }
     }
 
-    if (tmdbType === "tv" && data.seasons?.length) {
+    if (tmdbType !== "tv" && imdbId) {
+      const releaseDate = data.release_date || data.first_air_date || "1970-01-01"
+      meta.videos = [{
+        id: imdbId,
+        title: meta.name,
+        released: new Date(releaseDate).toISOString(),
+      }]
+      meta.behaviorHints = { defaultVideoId: imdbId }
+    } else if (tmdbType === "tv" && data.seasons?.length) {
       const seasonNumbers = data.seasons
         .filter(s => s.season_number > 0)
         .map(s => s.season_number)
