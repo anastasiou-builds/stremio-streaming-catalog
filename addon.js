@@ -177,13 +177,9 @@ const builder = addonBuilder({
   version: "2.0.0",
   name: "Streaming Catalog",
   description: "Browse movies & series on Netflix, Prime, Disney+, Hulu, Max, Apple TV+, Paramount+, Peacock, Discovery+ — by genre, popularity, latest, or top rated",
-  resources: [
-    { name: "catalog", types: ["movie", "series"] },
-    { name: "meta",    types: ["movie", "series"], idPrefixes: ["movie:", "tv:", "tt"] },
-    { name: "stream",  types: ["movie", "series"], idPrefixes: ["movie:", "tv:"] },
-  ],
+  resources: ["catalog", "meta", "stream"],
   types: ["movie", "series"],
-  idPrefixes: ["movie:", "tv:"],
+  idPrefixes: ["movie:", "tv:", "tt"],
   catalogs: buildCatalogs(),
   behaviorHints: {
     configurable: false,
